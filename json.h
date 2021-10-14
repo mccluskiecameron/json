@@ -9,13 +9,7 @@
 #define CASE break; case
 #define DEFAULT break; default
 
-typedef struct js_trie {
-    char * name;
-    int val;
-    struct js_trie ** tab;
-} js_trie;
-
-typedef unsigned char u8;
+typedef struct js_trie js_trie;
 
 js_trie * js_trie_init(void);
 js_trie * js_trie_ins(js_trie * tr, char * name, int val);
@@ -43,6 +37,9 @@ typedef struct {
     int i;
 } js_buf;
 
+/* lbl is a label, which will be jumped to if an error occurs
+ * this uses longjmp, thus is only valid until you return from the
+ * current scope */
 #define JS_BUF(desc, reader, lbl) ({\
         js_buf * js = NEW((js_buf){.arg=desc, .read=reader, .dat=malloc(1024), .l=1024});\
         if(setjmp(js->jmp)) goto lbl;\
@@ -75,19 +72,29 @@ int js_arr_cont(js_buf * js);
 #define JS_ARR_ITER(js) \
     for(int _js_arr_iter=0; _js_arr_iter==0?js_arr_start(js):js_arr_cont(js); _js_arr_iter|=1)
 
-char js_char(js_buf * js);
 int js_enum(js_buf *, js_trie *);
 int js_enum_key(js_buf *, js_trie * );
-int js_next(js_buf * js);
 
+/* caller is responsible for freeing the returned object */
 char * js_str(js_buf * js);
+
+/* returns number of bytes written 
+ * if return value is smaller than buffer size, there are no more bytes to read
+ * otherwise, you may call again to retrieve more data */
+int js_str_arr(js_buf * js, int n, char arr[static n]);
+
+/* see js_str */
 char * js_key(js_buf * js);
+
+/* see js_str_arr */
+int js_key_arr(js_buf * js, int n, char arr[static n]);
 
 int js_int(js_buf * js);
 double js_flt(js_buf * js);
 
-int js_cmp(js_buf * js, char * str);
 int js_bool(js_buf * js);
+
+void js_null(js_buf * buf);
 
 void js_skip(js_buf * js);
 

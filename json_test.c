@@ -10,6 +10,8 @@
 #define KEYS(_) _(key1) _(key2) _(key3) _(key4)
 JS_ENUM_DECL(keys, KEYS)
 
+char buf[1024];
+
 int main(void){
     int fd = open("test.json", O_RDONLY);
     js_buf * js = JS_FD_BUF(fd, err);
@@ -17,7 +19,10 @@ int main(void){
     JS_OBJ_ITER(js){
         switch(js_enum_key(js, keys)){
             CASE JS_key1:
-                printf("'%s'\n", js_str(js));
+                ; int l = js_str_arr(js, 1023, buf);
+                if(l==1023)goto err;
+                buf[l] = '\0';
+                printf("'%s'\n", buf);
             CASE JS_key2:
                 printf("%d\n", js_int(js));
             CASE JS_key3:
